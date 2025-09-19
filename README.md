@@ -174,14 +174,6 @@ Health check endpoint.
 - Basic input validation on notification type/message
 - No authentication/authorization
 
-### Production Recommendations
-1. **Authentication**: Add JWT/session-based auth for WebSocket connections
-2. **Rate Limiting**: Implement rate limiting on `/notify` endpoint
-3. **Input Sanitization**: Sanitize HTML in messages to prevent XSS
-4. **HTTPS/WSS**: Use TLS for all connections
-5. **CORS**: Restrict to specific production domains
-6. **Redis Auth**: Enable Redis password/ACL
-
 ## 🚦 Monitoring & Observability
 
 ### Key Metrics to Track
@@ -199,74 +191,6 @@ Current implementation logs:
 - Message parsing errors
 - Redis publish failures
 
-## 📈 Scaling Considerations
-
-### Horizontal Scaling
-```
-                    ┌──────────┐
-                    │  Redis   │
-                    └────┬─────┘
-                         │
-        ┌────────────────┼────────────────┐
-        ▼                ▼                ▼
-   ┌─────────┐     ┌─────────┐     ┌─────────┐
-   │Server 1 │     │Server 2 │     │Server 3 │
-   └─────────┘     └─────────┘     └─────────┘
-        ▲                ▲                ▲
-        └────────────────┼────────────────┘
-                         │
-                  Load Balancer
-                  (Sticky Sessions)
-```
-
-### Requirements for Scale
-1. **Sticky Sessions**: Required for Socket.IO (or use Redis adapter)
-2. **Redis Cluster**: For high-availability message broker
-3. **Persistent Backlog**: Move from memory to Redis/PostgreSQL
-4. **Message Ordering**: Consider Redis Streams for guaranteed ordering
-
-## 🔄 Potential Enhancements
-
-### Near-term
-- [ ] Add timestamp grouping (Today, Yesterday, etc.)
-- [ ] Implement notification filtering by type
-- [ ] Add sound/desktop notifications
-- [ ] Message deduplication
-- [ ] Client-side persistence (IndexedDB)
-
-### Long-term
-- [ ] Message acknowledgment/read receipts
-- [ ] User-specific notifications (rooms/channels)
-- [ ] Message priority levels
-- [ ] Scheduled notifications
-- [ ] Analytics dashboard
-- [ ] Message replay/history API
-- [ ] Webhook integrations
-
-## 🧪 Testing Strategy
-
-### Unit Tests
-- Event validation logic
-- Backlog management
-- Message formatting
-
-### Integration Tests
-- Redis pub/sub flow
-- WebSocket connection lifecycle
-- REST API endpoints
-
-### E2E Tests
-- Full notification flow
-- Reconnection scenarios
-- Backlog retrieval
-
-### Load Testing
-```bash
-# Example using Artillery
-artillery quick -n 1000 -c 50 \
-  http://localhost:3001/notify \
-  -p '{"type":"info","message":"Load test"}'
-```
 
 ## 📝 Development Notes
 
@@ -288,13 +212,7 @@ artillery quick -n 1000 -c 50 \
 | No authentication | Quick setup | Not production-ready |
 | Client-side limit (50) | Performance | May lose old messages |
 
-### Lessons for Production
 
-1. **Persistence**: Backlog should survive restarts (Redis/DB)
-2. **Authentication**: Secure WebSocket connections
-3. **Monitoring**: Add metrics collection (Prometheus/Grafana)
-4. **Error Budget**: Define SLOs for message delivery
-5. **Graceful Shutdown**: Properly close connections and save state
 
 ## 📚 References
 
