@@ -97,7 +97,7 @@ export default function App() {
                     maxHeight: 600,
                     overflowY: 'auto'
                 }}>
-                    {events.map((e) => (
+                    {events.slice(-50).reverse().map((e) => (
                         <li key={e.id} style={{
                             border: '1px solid #eee',
                             padding: 12,
