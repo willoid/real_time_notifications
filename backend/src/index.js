@@ -42,8 +42,10 @@ redisSub.on('message', (channel, message) => {
 io.on('connection', (socket) => {
     console.log('client connected', socket.id);
 
-    // TODO: backlog handshake – send last N events to the new client
-    // Hint: socket.emit('backlog', backlog)
+    // Send backlog to new client
+    if (backlog.length > 0) {
+        socket.emit('backlog', backlog);
+    }
 
     socket.on('disconnect', () => {
         console.log('client disconnected', socket.id);
@@ -55,10 +57,32 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 
 // Broadcast helper: POST /notify { type, message }
 app.post('/notify', async (req, res) => {
-    // TODO: validate and publish to Redis
-    // const evt = { id: Date.now().toString(), ... };
-    // await redisPub.publish(CHANNEL, JSON.stringify(evt));
-    res.status(202).json({ accepted: true });
+    const { type, message } = req.body;
+
+    // Validate input
+    if (!type || !message) {
+        return res.status(400).json({ error: 'Missing type or message' });
+    }
+
+    const validTypes = ['info', 'success', 'warning', 'error'];
+    if (!validTypes.includes(type)) {
+        return res.status(400).json({ error: 'Invalid type. Must be: info, success, warning, or error' });
+    }
+
+    const evt = {
+        id: Date.now().toString(),
+        type,
+        message,
+        timestamp: new Date().toISOString()
+    };
+
+    try {
+        await redisPub.publish(CHANNEL, JSON.stringify(evt));
+        res.status(202).json({ accepted: true, event: evt });
+    } catch (error) {
+        console.error('Failed to publish notification:', error);
+        res.status(500).json({ error: 'Failed to publish notification' });
+    }
 });
 
 const PORT = process.env.PORT || 3001;
